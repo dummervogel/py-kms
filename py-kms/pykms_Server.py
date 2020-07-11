@@ -36,10 +36,10 @@ class KeyServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
         allow_reuse_address = True
 
         def __init__(self, server_address, RequestHandlerClass):
-                self.address_family = socket.AF_INET6 # This call make sure the server creates an IPv6 socket and NOT an IPv4 by default
+                self.address_family = socket.AF_INET # This call make sure the server creates an IPv6 socket and NOT an IPv4 by default
                 socketserver.TCPServer.__init__(self, server_address, RequestHandlerClass)
                 self.__shutdown_request = False
-                self.r_service, self.w_service = os.pipe()
+                #self.r_service, self.w_service = os.pipe()
 
                 if hasattr(selectors, 'PollSelector'):
                         self._ServerSelector = selectors.PollSelector
@@ -67,7 +67,7 @@ class KeyServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
                         with self._ServerSelector() as selector:
                                 selector.register(fileobj = self, events = selectors.EVENT_READ)
                                 # self-pipe trick.
-                                selector.register(fileobj = self.r_service, events = selectors.EVENT_READ)
+                                # selector.register(fileobj = self.r_service, events = selectors.EVENT_READ)
 
                                 while not self.__shutdown_request:
                                         ready = selector.select(timeout)
@@ -84,9 +84,10 @@ class KeyServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
                                                         if key.fileobj is self:
                                                                 self._handle_request_noblock()
                                                         elif key.fileobj is self.r_service:
+                                                                pass
                                                                 # only to clean buffer.
-                                                                msgkill = os.read(self.r_service, 8).decode('utf-8')
-                                                                sys.exit(0)
+                                                                #msgkill = os.read(self.r_service, 8).decode('utf-8')
+                                                                #sys.exit(0)
                 finally:
                         self.__shutdown_request = False
 
@@ -120,7 +121,7 @@ class server_thread(threading.Thread):
                 self.is_running_thread.set()
 
         def terminate_eject(self):
-                os.write(self.server.w_service, u'☠'.encode('utf-8'))
+                pass#os.write(self.server.w_service, u'☠'.encode('utf-8'))
 
         def run(self):
                 while not self.is_running_thread.is_set():
